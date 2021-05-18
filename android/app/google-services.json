@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "853268885876",
+    "project_id": "magnifier-60ebe",
+    "storage_bucket": "magnifier-60ebe.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:853268885876:android:16adc38ab33f90fea27c21",
+        "android_client_info": {
+          "package_name": "com.demit.magnifyingglass"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "853268885876-h805fm88ork7s1dqkdfh4o8rnfsnbouv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.demit.magnifyingglass",
+            "certificate_hash": "cfacc09b8ce26bfa5a14695eb7c006b14ea86e8e"
+          }
+        },
+        {
+          "client_id": "853268885876-mv71oehufjfkgh9g4m9q853p1k38vh9s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBvQKoPkNJdyTPCIeFo6ofcGTkMlFroOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "853268885876-mv71oehufjfkgh9g4m9q853p1k38vh9s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
