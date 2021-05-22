@@ -2,8 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+import '../AdHelper.dart';
 
 class CapturedImages extends StatefulWidget {
   const CapturedImages({Key key}) : super(key: key);
@@ -19,11 +22,30 @@ class _CapturedImagesState extends State<CapturedImages> {
 
   String errortext = 'No Images Added yet';
   double width , height;
+
+
+  BannerAd _bannerAd;
+  bool _isbloading = false;
+
   @override
   void initState() {
     super.initState();
     _listenForPermissionStatus();
     _futureGetPath = _getPath();
+
+
+    _bannerAd = BannerAd(size: AdSize.banner,
+        adUnitId: Adhelper.bannerAdUnitId,
+        listener: AdListener(onAdLoaded: (_){
+          print('loaded');
+          // Fluttertoast.showToast(msg: "banner loaded");
+          setState(() {
+            _isbloading = true;
+          });
+        }),
+        request: AdRequest()
+    );
+    _bannerAd.load();
   }
 
   @override
@@ -36,28 +58,31 @@ class _CapturedImagesState extends State<CapturedImages> {
     return Scaffold(
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            FutureBuilder(
-              future: _futureGetPath,
-              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                if (snapshot.hasData) {
-                  var dir = Directory(snapshot.data);
-                  print('permission status: $_permissionStatus');
-                  if (_permissionStatus) _fetchFiles(dir);
-                  return Container(
-                    padding: EdgeInsets.symmetric(horizontal: width * 0.03 , vertical: height * 0.02),
+            Container(
+              width: double.infinity,
+              child: FutureBuilder(
+                future: _futureGetPath,
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  if (snapshot.hasData) {
+                    var dir = Directory(snapshot.data);
+                    print('permission status: $_permissionStatus');
+                    if (_permissionStatus) _fetchFiles(dir);
+                    return Container(
+                      padding: EdgeInsets.symmetric(horizontal: width * 0.03 , vertical: height * 0.02),
 
-                    child: Text('My Images:',style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold
-                    ),),
-                  );
-                } else {
-                  return Text('No Images Added yet');
-                }
-              },
+                      child: Text('My Images:',style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold
+                      ),),
+                    );
+                  } else {
+                    return Text('No Images Added yet');
+                  }
+                },
+              ),
             ),
             Expanded(
               child: listImagePath.length == 0  ?
@@ -74,13 +99,27 @@ class _CapturedImagesState extends State<CapturedImages> {
                 primary: false,
 
               ),
-            )
+            ),
+            adwidget(),
           ],
         ),
       ),
     );
   }
 
+  Widget adwidget(){
+    if(_isbloading){
+
+      return Container(
+        child: AdWidget(ad: _bannerAd,),
+        height: AdSize.banner.height.toDouble(),
+        width: _bannerAd.size.width.toDouble(),
+        alignment: Alignment.center,
+      );
+    }else{
+      return Container();
+    }
+  }
   // Check for storage permission
   void _listenForPermissionStatus() async {
     final status = await Permission.storage.request().isGranted;

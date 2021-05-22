@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:in_app_review/in_app_review.dart';
 import 'package:magnifyingglass/AdHelper.dart';
 import 'package:magnifyingglass/Alert/BaseAlert.dart';
 import 'package:path/path.dart';
@@ -20,6 +21,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:photofilters/filters/filters.dart';
 import 'package:photofilters/filters/preset_filters.dart';
 import 'package:photofilters/widgets/photo_filter.dart';
+import 'package:rating_dialog/rating_dialog.dart';
 import 'package:screen/screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:screenshot/screenshot.dart';
@@ -46,24 +48,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     print('ccccc $c');
     sharedPreferences.setInt("count", c + 1);
 
-
     if(c == 3){
-      var baseDialog = BaseAlertDialog(
-          title: "Like this app?",
-          content: "Rate us on app store",
-          yesOnPressed: () async {
-            Navigator.of(contextt).pop();
-            print("yes");
-
-            Fluttertoast.showToast(msg: "rate");
-          },
-          noOnPressed: () {
-            Navigator.of(contextt).pop();
-
-          },
-          yes: "Ok",
-          no: "Cancel");
-      showDialog(context: contextt, builder: (BuildContext context) => baseDialog);
+      _showRatingDialog(contextt);
     }
   }
   int type = 0;
@@ -71,8 +57,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _isfullscreen = false;
   final assetsAudioPlayer = AssetsAudioPlayer();
   BannerAd _bannerAd;
-  InterstitialAd _interstitialAd;
   bool _isbloading = false;
+  InterstitialAd _interstitialAd;
 
 
   @override
@@ -102,30 +88,22 @@ class _DashboardScreenState extends State<DashboardScreen>
     // );
     // _interstitialAd.load();
 
-    // intersetialadd();
+    intersetialadd();
 
 
-    _bannerAd = BannerAd(size: AdSize.banner,
-        adUnitId: Adhelper.bannerAdUnitId,
-        listener: AdListener(onAdLoaded: (_){
-          print('loaded');
-          setState(() {
-            _isbloading = true;
-          });
-        }),
-        request: AdRequest()
-    );
-    _bannerAd.load();
+
 
   }
 
-  bool _interstitialReady;
+  bool _interstitialReady = false;
   void intersetialadd() {
+    print('Intersertial');
     _interstitialAd ??= InterstitialAd(
       adUnitId: InterstitialAd.testAdUnitId,
       request: AdRequest(),
       listener: AdListener(
         onAdLoaded: (Ad ad) {
+          // Fluttertoast.showToast(msg: "intersr loaded");
           print('${ad.runtimeType} loaded.');
           _interstitialReady = true;
         },
@@ -151,18 +129,19 @@ class _DashboardScreenState extends State<DashboardScreen>
     )..load();
   }
 
-  Widget adwidget(){
-    if(_isbloading){
-      return Container(
-        child: AdWidget(ad: _bannerAd,),
-        height: AdSize.banner.height.toDouble(),
-        width: _bannerAd.size.width.toDouble(),
-        alignment: Alignment.center,
-      );
-    }else{
-      return Container();
-    }
-  }
+  // Widget adwidget(){
+  //   if(_isbloading){
+  //
+  //     return Container(
+  //       child: AdWidget(ad: _bannerAd,),
+  //       height: AdSize.banner.height.toDouble(),
+  //       width: _bannerAd.size.width.toDouble(),
+  //       alignment: Alignment.center,
+  //     );
+  //   }else{
+  //     return Container();
+  //   }
+  // }
   @override
   Widget build(BuildContext context) {
 
@@ -173,294 +152,311 @@ class _DashboardScreenState extends State<DashboardScreen>
     width = MediaQuery.of(context).size.width;
 
 
-    return Scaffold(
-      body: SafeArea(
-        child: Container(
-          width: width,
-          color: Colors.black,
-          child: Stack(
-            children: [
-              Positioned(child:  _cameraPreviewWidget(context)),
+    return WillPopScope(
+      onWillPop: () async {
+        // Fluttertoast.showToast(msg: _interstitialReady.toString());
+        print(_interstitialReady);
+        if(_interstitialReady){
+          _interstitialAd.show();
+        }else{
+          if(Platform.isIOS){
+            MinimizeApp.minimizeApp();
+          }else{
+            SystemNavigator.pop();
+          }
+        }
+        return false;
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Container(
+            width: width,
+            color: Colors.black,
+            child: Stack(
+              children: [
+                Positioned(child:  _cameraPreviewWidget(context)),
 
-              !_isfullscreen ?
-              Positioned(
-                top: height * 0.01,
-                  left: width * 0.02,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.white,
-                    radius: width * 0.05,
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      icon: Icon(Icons.adaptive.arrow_back),
-                      color: Colors.black,
-                      onPressed: () async {
-                        // if(_interstitialReady){
-                        //   _interstitialAd.show();
-                        // }else{
-                          if(Platform.isIOS){
-                            MinimizeApp.minimizeApp();
-                          }else{
-                            SystemNavigator.pop();
-                          }
-                        // }
-                      },
-                    ),
-                  ),
-              ) : SizedBox(),
-              Positioned(
-                top: height * 0.01,
-                right: width * 0.02,
-                child: Column(
-                  children: [
-                    CircleAvatar(
+                !_isfullscreen ?
+                Positioned(
+                  top: height * 0.01,
+                    left: width * 0.02,
+                    child: CircleAvatar(
                       backgroundColor: Colors.white,
                       radius: width * 0.05,
                       child: IconButton(
                         padding: EdgeInsets.zero,
-                        icon: _isfullscreen ?  Icon(Icons.fullscreen_exit):Icon(Icons.fullscreen),
+                        icon: Icon(Icons.adaptive.arrow_back),
                         color: Colors.black,
-                        onPressed: () {
-                          setState(() {
-                            _isfullscreen = !_isfullscreen;
-                          });
-                        },
-                      ),
-                    ),
-                    SizedBox(height: height * 0.02,),
-                    !_isfullscreen ?
-                    CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: width * 0.05,
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: Icon(Icons.flip_camera_ios_outlined),
-                        color: Colors.black,
-                        onPressed: () {
-                          if(controller.description.lensDirection
-                              == CameraLensDirection.back){
-                            onNewCameraSelected(widget.cameras[1]);
+                        onPressed: (){
+                          // Fluttertoast.showToast(msg: _interstitialReady.toString());
+                          print(_interstitialReady);
+                          if(_interstitialReady){
+                            _interstitialAd.show();
                           }else{
-                            onNewCameraSelected(widget.cameras[0]);
+                            if(Platform.isIOS){
+                              MinimizeApp.minimizeApp();
+                            }else{
+                              SystemNavigator.pop();
+                            }
                           }
                         },
                       ),
-                    ) : SizedBox(),
-                  ],
-                )
-              ),
-
-              !_isfullscreen ? Positioned(
-                bottom: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xbf000000),
-                  ),
+                    ),
+                ) : SizedBox(),
+                Positioned(
+                  top: height * 0.01,
+                  right: width * 0.02,
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      adwidget(),
-                      Container(
-                        height: height * 0.08,
-                        child: type == 0 ?
-                      Container(
-                        height: height * 0.08,
-                        width: width,
-                        padding: EdgeInsets.symmetric(horizontal: width * 0.02),
-                        child: Row(
-                          children: [
-                            Text('${_currentValue.toInt()} X' , style: TextStyle(
-                              color: Colors.blue,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold
-                            ),),
-                            Expanded(
-                              child: Slider(
-                                value: _currentValue,
-                                min: _minAvailableZoom,
-                                max: 10,
-                                onChanged: (double value) {
-                                  setState(() {
-                                    _handleScaleUpdate1(value);
-                                  });
-                                },
-                              ),
-                            ),
-                            Text('10 X' , style: TextStyle(
+                      CircleAvatar(
+                        backgroundColor: Colors.white,
+                        radius: width * 0.05,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: _isfullscreen ?  Icon(Icons.fullscreen_exit):Icon(Icons.fullscreen),
+                          color: Colors.black,
+                          onPressed: () {
+                            setState(() {
+                              _isfullscreen = !_isfullscreen;
+                            });
+                          },
+                        ),
+                      ),
+                      SizedBox(height: height * 0.02,),
+                      !_isfullscreen ?
+                      CircleAvatar(
+                        backgroundColor: Colors.white,
+                        radius: width * 0.05,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: Icon(Icons.flip_camera_ios_outlined),
+                          color: Colors.black,
+                          onPressed: () {
+                            if(controller.description.lensDirection
+                                == CameraLensDirection.back){
+                              onNewCameraSelected(widget.cameras[1]);
+                            }else{
+                              onNewCameraSelected(widget.cameras[0]);
+                            }
+                          },
+                        ),
+                      ) : SizedBox(),
+                    ],
+                  )
+                ),
+
+                !_isfullscreen ? Positioned(
+                  bottom: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xbf000000),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          height: height * 0.08,
+                          child: type == 0 ?
+                        Container(
+                          height: height * 0.08,
+                          width: width,
+                          padding: EdgeInsets.symmetric(horizontal: width * 0.02),
+                          child: Row(
+                            children: [
+                              Text('${_currentValue.toInt()} X' , style: TextStyle(
                                 color: Colors.blue,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold
-                            ),),
-                          ],
+                              ),),
+                              Expanded(
+                                child: Slider(
+                                  value: _currentValue,
+                                  min: _minAvailableZoom,
+                                  max: 10,
+                                  onChanged: (double value) {
+                                    setState(() {
+                                      _handleScaleUpdate1(value);
+                                    });
+                                  },
+                                ),
+                              ),
+                              Text('10 X' , style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold
+                              ),),
+                            ],
+                          ),
+                        )
+                            :
+                        Container(
+                          height: height * 0.08,
+                          width: width,
+                          padding: EdgeInsets.symmetric(horizontal: width * 0.02),
+                          child: Row(
+                            children: [
+                              Icon(Icons.brightness_6 , color: Colors.blue),
+                              Expanded(
+                                child: Slider(
+                                  value: _currentExposureOffset,
+                                  min: _minAvailableExposureOffset,
+                                  max: _maxAvailableExposureOffset,
+                                  onChanged: (double value) {
+                                    setState(() {
+                                      setExposureOffset(value);
+                                    });
+                                  },
+                                ),
+                              ),
+                              Icon(Icons.brightness_7_rounded , color: Colors.blue,),
+                            ],
+                          ),
                         ),
-                      )
-                          :
-                      Container(
-                        height: height * 0.08,
-                        width: width,
-                        padding: EdgeInsets.symmetric(horizontal: width * 0.02),
-                        child: Row(
-                          children: [
-                            Icon(Icons.brightness_6 , color: Colors.blue),
-                            Expanded(
-                              child: Slider(
-                                value: _currentExposureOffset,
-                                min: _minAvailableExposureOffset,
-                                max: _maxAvailableExposureOffset,
-                                onChanged: (double value) {
+
+                        ),
+
+
+                        Container(
+                          height: height * 0.08,
+                          width: width,
+                          child: ListView(
+                            physics: BouncingScrollPhysics(),
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              GestureDetector(
+                                onTap: (){
                                   setState(() {
-                                    setExposureOffset(value);
+                                    type = 0;
                                   });
                                 },
+                                child: Container(
+                                    width: width * 0.2,
+                                    alignment: Alignment.center,
+                                    child: Image(
+                                      image: AssetImage('assets/images/zom.png'),
+                                      width: 30,
+                                    ),
+                                ),
                               ),
-                            ),
-                            Icon(Icons.brightness_7_rounded , color: Colors.blue,),
-                          ],
-                        ),
-                      ),
-
-                      ),
-
-
-                      Container(
-                        height: height * 0.08,
-                        width: width,
-                        child: ListView(
-                          physics: BouncingScrollPhysics(),
-                          scrollDirection: Axis.horizontal,
-                          children: [
-                            GestureDetector(
-                              onTap: (){
-                                setState(() {
-                                  type = 0;
-                                });
-                              },
-                              child: Container(
-                                  width: width * 0.2,
+                              GestureDetector(
+                                onTap: (){
+                                  if(controller.value.flashMode == FlashMode.off){
+                                    onSetFlashModeButtonPressed(FlashMode.torch);
+                                  }else{
+                                    onSetFlashModeButtonPressed(FlashMode.off);
+                                  }
+                                },
+                                child: Container(
+                                    width: width * 0.2,
                                   alignment: Alignment.center,
-                                  child: Image(
-                                    image: AssetImage('assets/images/zom.png'),
-                                    width: 30,
-                                  ),
+                                    child: Image(
+                                      image: AssetImage('assets/images/flashlight.png'),
+                                      width: 30,
+                                    ),
+                                ),
                               ),
-                            ),
-                            GestureDetector(
-                              onTap: (){
-                                if(controller.value.flashMode == FlashMode.off){
-                                  onSetFlashModeButtonPressed(FlashMode.torch);
-                                }else{
-                                  onSetFlashModeButtonPressed(FlashMode.off);
-                                }
-                              },
-                              child: Container(
-                                  width: width * 0.2,
-                                alignment: Alignment.center,
-                                  child: Image(
-                                    image: AssetImage('assets/images/flashlight.png'),
-                                    width: 30,
-                                  ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: (){
-                                if(sharedPreferences.getString("fm") == 'Video'){
-                                  Fluttertoast.showToast(msg: 'Can\'t take picture while in video mode');
-                                  return;
-                                }
-                                onTakePictureButtonPressed(context);
+                              GestureDetector(
+                                onTap: (){
+                                  if(sharedPreferences.getString("fm") == 'Video'){
+                                    Fluttertoast.showToast(msg: 'Can\'t take picture while in video mode');
+                                    return;
+                                  }
+                                  onTakePictureButtonPressed(context);
 
-                                // Navigator.of(context).push(MaterialPageRoute(builder: (_)=> FilterScreen()));
-                              },
-                              child: Container(
-                                  width: width * 0.2,
-                                alignment: Alignment.center,
-                                  child: Image(
-                                    image: AssetImage('assets/images/camera.png'),
-                                    width: 30,
-                                  ),
+                                  // Navigator.of(context).push(MaterialPageRoute(builder: (_)=> FilterScreen()));
+                                },
+                                child: Container(
+                                    width: width * 0.2,
+                                  alignment: Alignment.center,
+                                    child: Image(
+                                      image: AssetImage('assets/images/camera.png'),
+                                      width: 30,
+                                    ),
+                                ),
                               ),
-                            ),
-                            GestureDetector(
-                              onTap: (){
-                                Navigator.of(context).push(MaterialPageRoute(builder: (_)=> CapturedImages()));
-                              },
-                              child: Container(
-                                  width: width * 0.2,
-                                alignment: Alignment.center,
-                                  child: Image(
-                                    image: AssetImage('assets/images/copy.png'),
-                                    width: 30,
-                                  ),
+                              GestureDetector(
+                                onTap: (){
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (_)=> CapturedImages()));
+                                },
+                                child: Container(
+                                    width: width * 0.2,
+                                  alignment: Alignment.center,
+                                    child: Image(
+                                      image: AssetImage('assets/images/copy.png'),
+                                      width: 30,
+                                    ),
+                                ),
                               ),
-                            ),
-                            // GestureDetector(
-                            //   onTap: () async {
-                            //     if(controller.value.isStreamingImages){
-                            //       await controller.stopImageStream();
-                            //     }else{
-                            //       await controller.startImageStream((image) => {
-                            //
-                            //       });
-                            //     }
-                            //   },
-                            //   child: Container(
-                            //       width: width * 0.2,
-                            //     alignment: Alignment.center,
-                            //       child: Image(
-                            //         image: AssetImage('assets/images/play.png'),
-                            //         width: 30,
-                            //       ),
-                            //   ),
-                            // ),
-                            // Container(
-                            //     width: width * 0.2,
-                            //   alignment: Alignment.center,
-                            //     child: Image(
-                            //       image: AssetImage('assets/images/filters.png'
-                            //       ),
-                            //       width: 30,
-                            //     ),
-                            // ),
-                            GestureDetector(
-                              onTap: (){
-                                setState(() {
-                                  type = 1;
-                                });
-                              },
-                              child: Container(
-                                  width: width * 0.2,
-                                alignment: Alignment.center,
-                                  child: Image(
-                                    image: AssetImage('assets/images/brightness.png'),
-                                    width: 30,
-                                  ),
+                              // GestureDetector(
+                              //   onTap: () async {
+                              //     if(controller.value.isStreamingImages){
+                              //       await controller.stopImageStream();
+                              //     }else{
+                              //       await controller.startImageStream((image) => {
+                              //
+                              //       });
+                              //     }
+                              //   },
+                              //   child: Container(
+                              //       width: width * 0.2,
+                              //     alignment: Alignment.center,
+                              //       child: Image(
+                              //         image: AssetImage('assets/images/play.png'),
+                              //         width: 30,
+                              //       ),
+                              //   ),
+                              // ),
+                              // Container(
+                              //     width: width * 0.2,
+                              //   alignment: Alignment.center,
+                              //     child: Image(
+                              //       image: AssetImage('assets/images/filters.png'
+                              //       ),
+                              //       width: 30,
+                              //     ),
+                              // ),
+                              GestureDetector(
+                                onTap: (){
+                                  setState(() {
+                                    type = 1;
+                                  });
+                                },
+                                child: Container(
+                                    width: width * 0.2,
+                                  alignment: Alignment.center,
+                                    child: Image(
+                                      image: AssetImage('assets/images/brightness.png'),
+                                      width: 30,
+                                    ),
+                                ),
                               ),
-                            ),
-                            GestureDetector(
-                              onTap: (){
-                                Navigator.of(context).push(MaterialPageRoute(builder: (_) => SettingsScreen()));
-                              },
-                              child: Container(
-                                  width: width * 0.2,
-                                alignment: Alignment.center,
+                              GestureDetector(
+                                onTap: (){
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => SettingsScreen()));
+                                },
+                                child: Container(
+                                    width: width * 0.2,
+                                  alignment: Alignment.center,
 
-                                  child: Image(
-                                    image: AssetImage('assets/images/gear.png'),
-                                    width: 30,
-                                  ),
+                                    child: Image(
+                                      image: AssetImage('assets/images/gear.png'),
+                                      width: 30,
+                                    ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
                   ),
-                ),
-              ) : SizedBox()
-            ],
+                ) : SizedBox()
+              ],
+            ),
           ),
         ),
-      ),
 
+      ),
     );
   }
 
@@ -484,6 +480,58 @@ class _DashboardScreenState extends State<DashboardScreen>
   int _pointers = 0;
 
 
+  void _rateAndReviewApp() async {
+    final _inAppReview = InAppReview.instance;
+
+    if (await _inAppReview.isAvailable()) {
+      print('request actual review from store');
+      _inAppReview.requestReview();
+    } else {
+      print('open actual store listing');
+      // TODO: use your own store ids
+      _inAppReview.openStoreListing(
+
+        appStoreId: 'com.demit.magnifyingglass',
+
+        // microsoftStoreId: '<your microsoft store id>',
+      );
+    }
+  }
+  void _showRatingDialog(BuildContext context) {
+    final _dialog = RatingDialog(
+      // your app's name?
+      title: 'Rating Dialog',
+      // encourage your user to leave a high rating?
+      message:
+      'Tap a star to set your rating. Add more description here if you want.',
+      // your app's logo?
+      image: Image.asset('assets/images/logo.png' , width: 100, height: 100,),
+
+      itemsize: 20,
+      submitButton: 'Submit',
+      onCancelled: () => print('cancelled'),
+      onSubmitted: (response) {
+
+        Fluttertoast.showToast(msg: '${response.rating}');
+        print('rating: ${response.rating}, comment: ${response.comment}');
+
+        // // TODO: add your own logic
+        // if (response.rating < 3.0) {
+        //   // send their comments to your email or anywhere you wish
+        //   // ask the user to contact you instead of leaving a bad review
+        // } else {
+        //   _rateAndReviewApp();
+        // }
+      },
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      barrierDismissible: true, // set to false if you want to force a rating
+      builder: (context) => _dialog,
+    );
+  }
 
   @override
   void dispose() {
@@ -689,7 +737,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         print("object1");
         final Directory dir = await getExternalStorageDirectory();
         final path = '${dir.path.replaceAll("/storage/emulated/0/", "")
-            .replaceAll("/storage/emulated/1/", "")}' ;
+            .replaceAll("/storage/emulated/1/", "").replaceAll("Internal Storage", "")}' ;
 
         print('pathhhhh: $path');
 

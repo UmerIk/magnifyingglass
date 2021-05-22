@@ -39,8 +39,10 @@ dependencies:
   photofilters: ^2.0.2
   image_picker: ^0.7.4
   assets_audio_player: ^3.0.3+3
-
+  google_mobile_ads: ^0.12.2+1
   url_launcher: ^6.0.3
+  rating_dialog: ^2.0.0
+  in_app_review: ^2.0.2
 
 dev_dependencies:
   flutter_test:
