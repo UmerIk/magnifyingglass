@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:device_info/device_info.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -79,7 +80,7 @@ class _CapturedImagesState extends State<CapturedImages> {
                       ),),
                     );
                   } else {
-                    return Text('No Images Added yet');
+                    return Text('My Images');
                   }
                 },
               ),
@@ -130,7 +131,26 @@ class _CapturedImagesState extends State<CapturedImages> {
   // Get storage path
   // https://pub.dev/documentation/ext_storage/latest/
   Future<String> _getPath() async{
-    Directory dir = await getExternalStorageDirectory();
+
+    Directory dir;
+
+    if(Platform.isAndroid){
+      var androidInfo = await DeviceInfoPlugin().androidInfo;
+      var release = androidInfo.version.release;
+      var sdkInt = androidInfo.version.sdkInt;
+      var manufacturer = androidInfo.manufacturer;
+      var model = androidInfo.model;
+
+      if(int.parse(release) >= 11){
+        return '/storage/emulated/0/Pictures/';
+      }else{
+        dir = await getExternalStorageDirectory();
+      }
+      print('Android $release (SDK $sdkInt), $manufacturer $model');
+    }else{
+      dir = await getExternalStorageDirectory();
+    }
+
     return dir.path;
   }
 
