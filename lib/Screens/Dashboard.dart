@@ -5,7 +5,6 @@ import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:magnifyingglass/AdHelper.dart';
-import 'package:magnifyingglass/Alert/BaseAlert.dart';
 import 'package:path/path.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
