@@ -676,11 +676,15 @@ class _DashboardScreenState extends State<DashboardScreen>
             .then((value) => _maxAvailableExposureOffset = value),
         cameraController
             .getMaxZoomLevel()
-            .then((value) => {
-              _maxAvailableZoom = value,
-              mulp = _maxAvailableZoom / 10,
-          print(mulp),
-          _handleScaleUpdate1(4),
+            .then((value){
+              if(value > 10){
+                _maxAvailableZoom = 10;
+              }else{
+                _maxAvailableZoom = value;
+              }
+              mulp = _maxAvailableZoom / 10;
+              print(mulp);
+              _handleScaleUpdate1(4);
             }),
         cameraController
             .getMinZoomLevel()
