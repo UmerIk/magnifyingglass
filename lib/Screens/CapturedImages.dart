@@ -135,6 +135,8 @@ class _CapturedImagesState extends State<CapturedImages> {
     Directory dir;
 
     if(Platform.isAndroid){
+      return '/storage/emulated/0/Pictures/';
+
       var androidInfo = await DeviceInfoPlugin().androidInfo;
       var release = androidInfo.version.release;
       var sdkInt = androidInfo.version.sdkInt;
