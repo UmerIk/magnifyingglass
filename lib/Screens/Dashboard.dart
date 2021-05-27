@@ -741,11 +741,13 @@ class _DashboardScreenState extends State<DashboardScreen>
 
         print("object1");
         final Directory dir = await getExternalStorageDirectory();
-        final path = 'Pictures' ;
+        final path = '${dir.path.replaceAll("/storage/emulated/0/", "")
+            .replaceAll("/storage/emulated/1/", "").replaceAll("/Internal Storage/", "")}' ;
 
         print('pathhhhh: $path');
 
-        await GallerySaver.saveImage(imgfile.path , albumName: path ,).then((value){
+        await GallerySaver.saveImage(imgfile.path , albumName: path ,).then((value) {
+
           Fluttertoast.showToast(msg: 'Image Saved');
         }).catchError((onError){
           Fluttertoast.showToast(msg: 'Failed to save');
